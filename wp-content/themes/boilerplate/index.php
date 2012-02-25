@@ -20,8 +20,13 @@ get_header(); ?>
 			 * If you want to overload this in a child theme then include a file
 			 * called loop-index.php and that will be used instead.
 			 */
-			 get_template_part( 'loop', 'index' );
+		$pods = new Pod('now_showing');
+		$pods->findRecords('name ASC', 25);
+		echo $pods->showTemplate('upcoming');
+
+			
+			 // get_template_part( 'loop', 'index' );
 			?>
 
-<?php get_sidebar(); ?>
-<?php get_footer(); ?>
+ <?php // get_sidebar(); ?>
+ <?php // get_footer(); ?>

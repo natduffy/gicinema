@@ -175,11 +175,17 @@ h1, h2, h3, h4, h5, h6 { font-weight: bold; }
 /**
  * Primary styles
  *
- * Author:
+ * Author: Nat Duffy
  */
 
+.now-showing {
+	margin: 10px 0 0 50px;
+	background: #fff;
+}
 
-
+.now-showing-title {
+	font-size: 60px
+}
 
 
 
