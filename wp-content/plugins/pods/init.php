@@ -1,13 +1,15 @@
 <?php
 /*
-Plugin Name: Pods CMS Framework
+Plugin Name: Pods - Custom Content Types and Fields
 Plugin URI: http://podsframework.org/
-Description: Pods is a CMS framework for creating, managing, and deploying customized content types.
-Version: 1.12.3
-Author: The Pods CMS Team
+Description: Pods is a framework for creating, managing, and deploying customized content types and fields
+Version: 2.0.0
+Author: Pods Framework Team
 Author URI: http://podsframework.org/about/
+Text Domain: pods
+Domain Path: /languages/
 
-(c) Copyright 2009-2012  The Pods CMS Team  (email : contact@podsframework.org)
+Copyright 2009-2012  The Pods Framework Team  (email : contact@podsframework.org)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,47 +26,56 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-define('PODS_VERSION', '1.12.3');
-if (!defined('PODS_WP_VERSION_MINIMUM'))
-    define('PODS_WP_VERSION_MINIMUM', '3.1');
-if (!defined('PODS_PHP_VERSION_MINIMUM'))
-    define('PODS_PHP_VERSION_MINIMUM', '5.2.4');
-if (!defined('PODS_MYSQL_VERSION_MINIMUM'))
-    define('PODS_MYSQL_VERSION_MINIMUM', '5.0');
+/**
+ * @package Pods\Global
+ */
 
-define('PODS_URL', rtrim(plugin_dir_url(__FILE__), '/')); // non-trailing slash being deprecated in 2.0
-define('PODS_DIR', rtrim(plugin_dir_path(__FILE__), '/')); // non-trailing slash being deprecated in 2.0
-define('WP_INC_URL', rtrim(includes_url(), '/')); // non-trailing slash being deprecated in 2.0
+// Prevent conflicts with Pods 1.x
+if ( !defined( 'PODS_VERSION' ) && !defined( 'PODS_DIR' ) ) {
+    define( 'PODS_VERSION', '2.0.0' );
 
-require_once(PODS_DIR . '/functions.php');
+    if ( !defined( 'PODS_WP_VERSION_MINIMUM' ) )
+        define( 'PODS_WP_VERSION_MINIMUM', '3.4' );
+    if ( !defined( 'PODS_PHP_VERSION_MINIMUM' ) )
+        define( 'PODS_PHP_VERSION_MINIMUM', '5.2.4' );
+    if ( !defined( 'PODS_MYSQL_VERSION_MINIMUM' ) )
+        define( 'PODS_MYSQL_VERSION_MINIMUM', '5.0' );
 
-require_once(PODS_DIR . '/classes/PodInit.php');
+    define( 'PODS_SLUG', plugin_basename( __FILE__ ) );
+    define( 'PODS_URL', plugin_dir_url( __FILE__ ) );
+    define( 'PODS_DIR', plugin_dir_path( __FILE__ ) );
 
-require_once(PODS_DIR . '/classes/Pod.php');
-require_once(PODS_DIR . '/classes/PodAPI.php');
+    global $pods, $pods_init;
 
-require_once(PODS_DIR . '/classes/PodCache.php');
+    require_once( PODS_DIR . 'functions.php' );
 
-require_once(PODS_DIR . '/pods-ui.php');
+    if ( false !== pods_compatible() && ( !defined( 'SHORTINIT' ) || !SHORTINIT ) ) {
+        if ( !defined( 'PODS_DEPRECATED' ) || PODS_DEPRECATED )
+            require_once( PODS_DIR . 'deprecated/deprecated.php' );
 
-global $pods_cache, $cache, $pods_init;
-if (false !== pods_compatible() && (!defined('SHORTINIT') || !SHORTINIT)) {
-    // JSON support
-    if (!function_exists('json_encode')) {
-        require_once(ABSPATH . '/wp-includes/js/tinymce/plugins/spellchecker/classes/utils/JSON.php');
+        $pods_init = pods_init();
+    }
+}
+else {
+    function pods_deactivate_1_x () {
+        if ( defined( 'PODS_VERSION' ) && defined( 'PODS_DIR' ) && file_exists( untrailingslashit( PODS_DIR ) . '/init.php' ) ) {
+            if ( !function_exists( 'deactivate_plugins' ) )
+                include_once ABSPATH . '/wp-admin/includes/plugin.php';
 
-        function json_encode($str) {
-            $json = new Moxiecode_JSON();
-            return $json->encode($str);
-        }
+            deactivate_plugins( untrailingslashit( PODS_DIR ) . '/init.php' );
 
-        function json_decode($str) {
-            $json = new Moxiecode_JSON();
-            return $json->decode($str);
+            // next refresh will load 2.0
+            return;
         }
     }
 
-    $pods_cache = PodCache::instance();
-    $cache = &$pods_cache; // DEPRECATED IN 2.0
-    $pods_init = new PodInit();
+    add_action( 'init', 'pods_deactivate_1_x' );
 }
+
+/**
+ * Load the plugin textdomain.
+ */
+function pods_textdomain () {
+	load_plugin_textdomain( 'pods', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+}
+add_action( 'plugins_loaded', 'pods_textdomain' );
